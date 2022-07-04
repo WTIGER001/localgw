@@ -1,0 +1,30 @@
+swagger: '2.0'
+info:
+  description: "Sample API" 
+  version: 1.0.0
+  title: Sample API
+host: YourAWSHOST
+basePath: /
+tags: 
+- name: Example
+schemes:
+  - https
+paths: 
+  /hello:
+    get:
+      tags:
+        - Example
+      operationId: hello
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 200 response            
+          type: string
+        '500':
+          description: 500 response
+      x-localgw:
+        port: 8001
+        vscode-path: lambda/hello

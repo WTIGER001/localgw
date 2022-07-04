@@ -48,3 +48,162 @@ x-localgw:
     port: 8001
     vscode-path: lambda/data-api
 ```
+
+## In Depth Example
+
+This is a simple "hello" example with lambda. 
+
+### Prepare
+
+**Install localgw**
+```bash
+go install github.com/wtiger001/localgw@latest
+```
+
+### Create a new project and configure
+
+```
+mkdir hello-lambda
+cd hello-lambda
+
+go mod init hello-lambda
+go get github.com/aws/aws-lambda-go/events
+go get github.com/aws/aws-lambda-go/lambda
+
+```
+
+### Generate a swagger file
+
+in `swagger.yaml`
+
+```yaml
+swagger: '2.0'
+info:
+  description: "Sample API" 
+  version: 1.0.0
+  title: Sample API
+host: YourAWSHOST
+basePath: /
+tags: 
+- name: Example
+schemes:
+  - https
+paths: 
+  /hello:
+    get:
+      tags:
+        - Example
+      operationId: hello
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 200 response            
+          type: string
+        '500':
+          description: 500 response
+      x-localgw:
+        port: 8001
+        vscode-path: lambda/hello
+```
+Notice the x-localgw structure
+
+### Create a local lambda function
+```
+mkdir lambda
+cd lambda
+
+mkdir hello
+cd hello
+
+touch main.go
+```
+In main.go
+```go
+package main
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+)
+
+func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	resp := events.APIGatewayProxyResponse{Headers: make(map[string]string)}
+	resp.Headers["Access-Control-Allow-Origin"] = "*"
+	resp.Headers["Access-Control-Allow-Credentials"] = "true"
+
+	resp.StatusCode = http.StatusOK
+	resp.Body = string("Hello Everyone")
+
+	return resp, nil
+}
+
+func main() {
+	lambda.Start(HandleRequest)
+}
+
+```
+
+Make sure it compiles
+```
+go build
+```
+### Generate the Launch Configurations
+
+```
+cd ../../
+
+localgw generate -s swagger.yaml
+```
+
+The output should be as shown below
+
+```json
+
+{
+   "name": "sample-api/hello:hello",
+   "type": "go",
+   "request": "launch",
+   "program": "lambda/hello",
+   "env": {
+      "_LAMBDA_SERVER_PORT": "8001"
+   }
+},
+
+{
+   "name": "Run Local Gateway",
+   "preLaunchTask": "run-local-gw-task",
+   "configurations": [
+      "sample-api/hello:hello"
+   ]
+},
+
+```
+
+### Copy the launch configurations
+
+- Place the first JSON block in your `launch.json` in the `configurations` section
+- Places the second JSON block in your `launch.json` in the `compounds` section
+- Define a task in your `tasks.json` file like below
+
+```json
+ {
+    "label": "run localgw",
+    "type": "shell",
+    "command": "localgw --s swagger.yaml"
+},
+```
+
+### Start your compound configuration
+Go into the debugging menu and start `Run Local Gateway` 
+
+You are now ready to send http requests to `localhost:3333` and you can debug each of the lamda functions. Try that by setting some break points and running
+
+```bash
+curl localhost:3333\hello
+```
