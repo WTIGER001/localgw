@@ -1,7 +1,22 @@
 # Local Gateway
 
-Provides a local bridge to Lambda that emulates the API Gateway
+Provides a local bridge to Lambda that emulates the API Gateway. The basic idea is that you have a bunch of lambda functions in go and a Swagger file that represents those functions. Then you annotate the swagger file with some vendor extensions. After that you run 
+```
+localgw generate -s <Path to Swagger file>
+```
+and copy the outputs into the correct VS Code Launch files
 
+Now you can run the single generated "Compound" launch config to start all the functions. 
+Additionally, you can run
+
+```
+localgw serve -s <Path to Swagger file> 
+```
+Starts the proxy on :3333
+
+Thanks to https://github.com/blmayer/awslambdarpc
+
+Note: This is far enough alnog that it works for my use case... let me know if there are other use cases. 
 
 ## Assumptions
 - Each lambda function runs in its own process that can be debugged, with each process having its own port
@@ -25,33 +40,11 @@ For each method / lambda function there will be the following generated
     "args": []
 },
 ```
-
-
-
-
-
-## Usage
-
 ### Annotatated Swagger
 
 The Swagger is annotated with the local lamda port
 ```yaml
-    x-localgw:
-        port: 8001
-        vscode-path: lambda/data-api
-        vscode-project: api 
+x-localgw:
+    port: 8001
+    vscode-path: lambda/data-api
 ```
-
-```bash
-localgw --swagger swagger.yaml --launch 
-```
-
-The above will generate the launch file and task file for vscode. The code assumes that the root directory is the 
-
-### Steps
-- Read the swagger file(s)
-- Build the configuration map
--- method, port, path, project
-- Generate the vscode launch configurations for go
-- Generate the vscode launch compounds
-- Generate the vscode task definitions
