@@ -107,9 +107,27 @@ func handleRequests(w http.ResponseWriter, r *http.Request) {
 	case "DELETE":
 		op = item.Delete
 	case "HEAD":
-		op = item.Head
+		// op = item.Head
+		// Add cors
+		// var resp events.APIGatewayProxyResponse
+
+		w.WriteHeader(200)
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
+		// io.WriteString(w, resp.Body)
+		return
 	case "OPTIONS":
-		op = item.Options
+		// op = item.Options
+
+		w.Header().Add("content-type", "application/json")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("access-control-allow-methods", "*")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
+		w.Header().Add("access-control-allow-headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key")
+		w.WriteHeader(200)
+
+		io.WriteString(w, "{}")
+		return
 	case "PATCH":
 		op = item.Patch
 	case "POST":
@@ -147,12 +165,16 @@ func handleRequests(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("UnMarshall Err: %v\n", err)
 	}
 	fmt.Printf("\n\n%+v\n\n", resp)
-	w.WriteHeader(resp.StatusCode)
 	for k, h := range resp.Headers {
 		w.Header().Add(k, h)
 	}
-
 	w.Header().Add("content-type", "application/json")
+	// w.Header().Add("Access-Control-Allow-Origin", "*")
+	// w.Header().Add("access-control-allow-methods", "*")
+	// w.Header().Add("Access-Control-Allow-Credentials", "true")
+	// w.Header().Add("access-control-allow-headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key")
+	w.WriteHeader(resp.StatusCode)
+
 	io.WriteString(w, resp.Body)
 }
 
